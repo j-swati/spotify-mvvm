@@ -13,9 +13,4 @@ interface ApiInterface {
                @Query("type") type: String = "multi",
                @Query("offset") offset: Int = 0,
                @Query("limit") limit: Int = 10): Call<TracksResponse>
-
-    @Headers("x-rapidapi-key:410665d3a7mshe50edbda597d4b9p18e119jsn03f20295d999",
-        "x-rapidapi-host:spotify23.p.rapidapi.com")
-    @GET("tracks")
-    fun getTrack(@Query("ids") ids: String): Call<TracksResponse>
 }

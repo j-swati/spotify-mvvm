@@ -80,4 +80,8 @@ dependencies {
     implementation (libs.logging.interceptor)
     implementation(libs.androidx.recyclerview)
     implementation (libs.picasso)
+    implementation (libs.ui)
+    implementation (libs.material3)
+    implementation (libs.androidx.activity.compose)
+    implementation (libs.coil.compose)
 }
