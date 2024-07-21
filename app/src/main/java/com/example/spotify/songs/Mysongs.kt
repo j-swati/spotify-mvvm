@@ -1,57 +1,8 @@
-package com.example.spotify.model
+package com.example.spotify.songs
 
-
-data class TracksResponse(
-    val albums: Albums
-)
-data class Albums(
-    val totalCount: Int,
-    val items: List<AlbumItem>
-)
-
-data class AlbumItem(
-    val data: AlbumData
-)
-
-data class AlbumData(
-    val uri: String,
-    val name: String,
-    val artists: AlbumArtists,
-    val coverArt: AlbumCoverArt,
-    val date: AlbumDate
-)
-
-data class AlbumArtists(
-    val items: List<AlbumArtist>
-)
-
-data class AlbumArtist(
-    val uri: String,
-    val profile: ArtistProfile
-)
-
-data class ArtistProfile(
-    val name: String
-)
-
-data class AlbumCoverArt(
-    val sources: List<AlbumCoverSource>
-)
-
-data class AlbumCoverSource(
-    val url: String,
-    val width: Int,
-    val height: Int
-)
-
-data class AlbumDate(
-    val year: Int
-)
-// Track details response
-data class TrackDetailsResponse(
+data class Mysongs(
     val tracks: List<Track>
 )
-
 data class Track(
     val album: Album,
     val artists: List<ArtistX>,
@@ -70,7 +21,6 @@ data class Track(
     val type: String,
     val uri: String
 )
-
 data class Album(
     val album_type: String,
     val artists: List<ArtistX>,
@@ -84,7 +34,6 @@ data class Album(
     val type: String,
     val uri: String
 )
-
 data class ArtistX(
     val external_urls: ExternalUrlsXXX,
     val id: String,
@@ -92,15 +41,12 @@ data class ArtistX(
     val type: String,
     val uri: String
 )
-
 data class ExternalIds(
     val isrc: String
 )
-
 data class ExternalUrlsXXX(
     val spotify: String
 )
-
 data class Image(
     val height: Int,
     val url: String,

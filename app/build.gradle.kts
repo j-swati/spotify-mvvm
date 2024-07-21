@@ -84,4 +84,18 @@ dependencies {
     implementation (libs.material3)
     implementation (libs.androidx.activity.compose)
     implementation (libs.coil.compose)
+    implementation (libs.material3)
+    implementation (libs.google.accompanist.systemuicontroller)
+    implementation (libs.accompanist.navigation.material)
+    implementation (libs.androidx.material)
+    implementation (libs.ui)
+    implementation (libs.androidx.foundation)
+    implementation (libs.androidx.runtime)
+    implementation (libs.androidx.lifecycle.runtime.ktx)
+    implementation (libs.androidx.activity.compose)
+    implementation (libs.coil.compose)
+    implementation (libs.androidx.media3.exoplayer)
+    implementation (libs.androidx.media3.ui)
+
+
 }
