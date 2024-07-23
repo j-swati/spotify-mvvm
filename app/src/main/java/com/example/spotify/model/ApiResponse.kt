@@ -2,7 +2,8 @@ package com.example.spotify.model
 
 
 data class TracksResponse(
-    val albums: Albums
+    val albums: Albums,
+    val songs:AlbumTracks
 )
 data class Albums(
     val totalCount: Int,
@@ -46,6 +47,38 @@ data class AlbumCoverSource(
 
 data class AlbumDate(
     val year: Int
+)
+data class AlbumTracks(
+    val items: List<ItemXX>,
+    val totalCount: Int
+)
+data class ItemXX(
+    val songdata: DataXX
+)
+data class DataXX(
+    val albumOfTracks: AlbumOfTracksX,
+    val artists: AlbumArtists,
+    val contentRating: ContentRating,
+    val duration:Duration,
+    val id:String,
+    val name:String,
+    val playability: Playability,
+    val uri: String
+)
+data class AlbumOfTracksX(
+    val coverArt: AlbumCoverArt,
+    val id: String,
+    val name: String,
+    val uri:String
+)
+data class ContentRating(
+        val label: String
+        )
+data class Duration(
+    val totalMillisecond: Int
+)
+data class Playability(
+    val playable: Boolean
 )
 // Track details response
 data class TrackDetailsResponse(

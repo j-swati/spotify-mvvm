@@ -42,6 +42,7 @@ import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.example.spotify.model.AlbumItem
 import com.example.spotify.model.ApiInterface
+import com.example.spotify.model.DataXX
 import com.example.spotify.model.Track
 import com.example.spotify.model.TrackDetailsResponse
 import com.example.spotify.model.TracksResponse
@@ -53,7 +54,8 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 class MainActivity : ComponentActivity() {
-    private val tracks = mutableStateListOf<AlbumItem>()
+    private val albums = mutableStateListOf<AlbumItem>() // Use AlbumItem for search results
+    private val tracks = mutableStateListOf<DataXX>() // Use DataXX for track details
     private val trackDetails = mutableStateListOf<Track>()
     private var exoPlayer: ExoPlayer? = null
 
@@ -111,6 +113,9 @@ class MainActivity : ComponentActivity() {
                 Text("Search")
             }
             LazyColumn(modifier = Modifier.fillMaxSize()) {
+                items(albums) { album ->
+                    AlbumItemView(album, apiInterface)
+                }
                 items(tracks) { track ->
                     TrackItem(track, apiInterface)
                 }
@@ -122,7 +127,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun TrackItem(track: AlbumItem, apiInterface: ApiInterface) {
+    fun AlbumItemView(album: AlbumItem, apiInterface: ApiInterface) {
         val scope = rememberCoroutineScope()
         Card(
             modifier = Modifier
@@ -136,7 +141,7 @@ class MainActivity : ComponentActivity() {
                 Image(
                     painter = rememberAsyncImagePainter(
                         ImageRequest.Builder(LocalContext.current)
-                            .data(data = track.data.coverArt.sources.firstOrNull()?.url).apply {
+                            .data(data = album.data.coverArt.sources.firstOrNull()?.url).apply {
                                 crossfade(true)
                             }.build()
                     ),
@@ -149,12 +154,54 @@ class MainActivity : ComponentActivity() {
                 Column(
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text(text = track.data.name, fontSize = 18.sp)
-                    Text(text = track.data.artists.items.joinToString(", ") { it.profile.name }, fontSize = 14.sp)
+                    Text(text = album.data.name, fontSize = 18.sp)
+                    Text(text = album.data.artists.items.joinToString(", ") { it.profile.name }, fontSize = 14.sp)
                 }
                 Button(onClick = {
                     scope.launch {
-                        getTrackDetails(apiInterface, track.data.uri.split(":").last())
+                        getTrackDetails(apiInterface, album.data.uri) // Optionally handle album details
+                    }
+                }) {
+                    Text("Details")
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun TrackItem(track: DataXX, apiInterface: ApiInterface) {
+        val scope = rememberCoroutineScope()
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            elevation = CardDefaults.cardElevation(4.dp)
+        ) {
+            Row(
+                modifier = Modifier.padding(8.dp)
+            ) {
+                Image(
+                    painter = rememberAsyncImagePainter(
+                        ImageRequest.Builder(LocalContext.current)
+                            .data(data = track.albumOfTracks.coverArt.sources.firstOrNull()?.url).apply {
+                                crossfade(true)
+                            }.build()
+                    ),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(64.dp)
+                        .padding(end = 8.dp),
+                    contentScale = ContentScale.Crop
+                )
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(text = track.name, fontSize = 18.sp)
+                    Text(text = track.artists.items.joinToString(", ") { it.profile.name }, fontSize = 14.sp)
+                }
+                Button(onClick = {
+                    scope.launch {
+                        getTrackDetails(apiInterface, track.id) // Use track.id from DataXX
                     }
                 }) {
                     Text("Details")
@@ -195,6 +242,7 @@ class MainActivity : ComponentActivity() {
                     Text(text = track.name, fontSize = 18.sp)
                     Text(text = track.artists.joinToString(", ") { it.name }, fontSize = 14.sp)
                     Text(text = "Album: ${track.album.name}", fontSize = 14.sp)
+                    Text(text = "ID: ${track.id}", fontSize = 14.sp) // Display track ID
                 }
                 Button(onClick = {
                     playPreview(track.preview_url)
@@ -212,7 +260,7 @@ class MainActivity : ComponentActivity() {
             .build()
         val apiInterface = retrofit.create(ApiInterface::class.java)
 
-        searchTracks(apiInterface, "q") // Replace "initial query" with a default search term if needed
+        searchTracks(apiInterface, "q") // Replace "q" with a default search term if needed
     }
 
     private fun searchTracks(apiInterface: ApiInterface, query: String) {
@@ -221,12 +269,19 @@ class MainActivity : ComponentActivity() {
         call.enqueue(object : Callback<TracksResponse> {
             override fun onResponse(call: Call<TracksResponse>, response: Response<TracksResponse>) {
                 if (response.isSuccessful) {
-                    val albums = response.body()?.albums?.items
-                    if (albums != null) {
-                        tracks.clear()
-                        tracks.addAll(albums)
+                    val albumsList = response.body()?.albums?.items
+                    val tracksList = response.body()?.songs?.items?.map { it.songdata }
+                    if (albumsList != null) {
+                        albums.clear()
+                        albums.addAll(albumsList)
                     } else {
-                        Toast.makeText(this@MainActivity, "No results found", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@MainActivity, "No album results found", Toast.LENGTH_SHORT).show()
+                    }
+                    if (tracksList != null) {
+                        tracks.clear()
+                        tracks.addAll(tracksList)
+                    } else {
+                        Toast.makeText(this@MainActivity, "No track results found", Toast.LENGTH_SHORT).show()
                     }
                 } else {
                     Toast.makeText(this@MainActivity, "Error: ${response.errorBody()}", Toast.LENGTH_SHORT).show()
@@ -246,9 +301,15 @@ class MainActivity : ComponentActivity() {
             override fun onResponse(call: Call<TrackDetailsResponse>, response: Response<TrackDetailsResponse>) {
                 if (response.isSuccessful) {
                     val trackDetailsList = response.body()?.tracks
-                    if (trackDetailsList != null) {
-                        trackDetails.clear()
-                        trackDetails.addAll(trackDetailsList)
+                    if (!trackDetailsList.isNullOrEmpty()) {
+                        // Validate the track name with the response
+                        val receivedTrack = trackDetailsList.first()
+                        if (tracks.any { it.id == trackId && it.name == receivedTrack.name }) {
+                            trackDetails.clear()
+                            trackDetails.addAll(trackDetailsList)
+                        } else {
+                            Toast.makeText(this@MainActivity, "Track ID does not match the track name", Toast.LENGTH_SHORT).show()
+                        }
                     } else {
                         Toast.makeText(this@MainActivity, "No details found", Toast.LENGTH_SHORT).show()
                     }
