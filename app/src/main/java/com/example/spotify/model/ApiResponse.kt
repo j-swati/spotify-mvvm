@@ -1,141 +1,60 @@
 package com.example.spotify.model
 
-
 data class TracksResponse(
-    val albums: Albums,
-    val songs:AlbumTracks
+    val query: String,
+    val tracks: Tracks
 )
-data class Albums(
-    val totalCount: Int,
-    val items: List<AlbumItem>
-)
-
-data class AlbumItem(
-    val data: AlbumData
-)
-
-data class AlbumData(
-    val uri: String,
-    val name: String,
-    val artists: AlbumArtists,
-    val coverArt: AlbumCoverArt,
-    val date: AlbumDate
-)
-
-data class AlbumArtists(
-    val items: List<AlbumArtist>
-)
-
-data class AlbumArtist(
-    val uri: String,
-    val profile: ArtistProfile
-)
-
-data class ArtistProfile(
-    val name: String
-)
-
-data class AlbumCoverArt(
-    val sources: List<AlbumCoverSource>
-)
-
-data class AlbumCoverSource(
-    val url: String,
-    val width: Int,
-    val height: Int
-)
-
-data class AlbumDate(
-    val year: Int
-)
-data class AlbumTracks(
-    val items: List<ItemXX>,
+data class Tracks(
+    val items: List<Item>,
     val totalCount: Int
 )
-data class ItemXX(
-    val songdata: DataXX
+data class Item(
+    val `data`: Data
 )
-data class DataXX(
-    val albumOfTracks: AlbumOfTracksX,
-    val artists: AlbumArtists,
+data class Data(
+    val albumOfTrack: AlbumOfTrack,
+    val artists: Artists,
     val contentRating: ContentRating,
-    val duration:Duration,
-    val id:String,
-    val name:String,
+    val duration: Duration,
+    val id: String,
+    val name: String,
     val playability: Playability,
     val uri: String
 )
-data class AlbumOfTracksX(
-    val coverArt: AlbumCoverArt,
+data class AlbumOfTrack(
+    val coverArt: CoverArt,
     val id: String,
     val name: String,
-    val uri:String
+    val sharingInfo: SharingInfo,
+    val uri: String
+)
+data class Artists(
+    val items: List<ItemX>
 )
 data class ContentRating(
-        val label: String
-        )
+    val label: String
+)
 data class Duration(
-    val totalMillisecond: Int
+    val totalMilliseconds: Int
 )
 data class Playability(
     val playable: Boolean
 )
-// Track details response
-data class TrackDetailsResponse(
-    val tracks: List<Track>
+data class SharingInfo(
+    val shareUrl: String
 )
-
-data class Track(
-    val album: Album,
-    val artists: List<ArtistX>,
-    val disc_number: Int,
-    val duration_ms: Int,
-    val explicit: Boolean,
-    val external_ids: ExternalIds,
-    val external_urls: ExternalUrlsXXX,
-    val id: String,
-    val is_local: Boolean,
-    val is_playable: Boolean,
-    val name: String,
-    val popularity: Int,
-    val preview_url: String,
-    val track_number: Int,
-    val type: String,
-    val uri: String
+data class CoverArt(
+    val sources: List<Source>
 )
-
-data class Album(
-    val album_type: String,
-    val artists: List<ArtistX>,
-    val external_urls: ExternalUrlsXXX,
-    val id: String,
-    val images: List<Image>,
-    val name: String,
-    val release_date: String,
-    val release_date_precision: String,
-    val total_tracks: Int,
-    val type: String,
-    val uri: String
-)
-
-data class ArtistX(
-    val external_urls: ExternalUrlsXXX,
-    val id: String,
-    val name: String,
-    val type: String,
-    val uri: String
-)
-
-data class ExternalIds(
-    val isrc: String
-)
-
-data class ExternalUrlsXXX(
-    val spotify: String
-)
-
-data class Image(
+data class Source(
     val height: Int,
     val url: String,
     val width: Int
+)
+data class ItemX(
+    val profile: Profile,
+    val uri: String
+)
+data class Profile(
+    val name: String
 )

@@ -1,5 +1,4 @@
 package com.example.spotify
-
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -7,22 +6,30 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -33,16 +40,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.navigation.NavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
-import com.example.spotify.model.AlbumItem
 import com.example.spotify.model.ApiInterface
-import com.example.spotify.model.DataXX
+import com.example.spotify.model.Data
 import com.example.spotify.model.Track
 import com.example.spotify.model.TrackDetailsResponse
 import com.example.spotify.model.TracksResponse
@@ -54,17 +66,16 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 class MainActivity : ComponentActivity() {
-    private val albums = mutableStateListOf<AlbumItem>() // Use AlbumItem for search results
-    private val tracks = mutableStateListOf<DataXX>() // Use DataXX for track details
-    private val trackDetails = mutableStateListOf<Track>()
+    private val tracks = mutableStateListOf<Data>()
+    private var trackDetails by mutableStateOf<Track?>(null)
     private var exoPlayer: ExoPlayer? = null
+    private var isPlaying by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            SpotifyApp()
+            AppNavigation()
         }
-        fetchInitialTracks()
     }
 
     override fun onDestroy() {
@@ -73,7 +84,19 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun SpotifyApp() {
+    fun AppNavigation() {
+        val navController = rememberNavController()
+
+        NavHost(navController = navController, startDestination = "home") {
+            composable("home") { HomeScreen(navController) }
+            composable("trackDetails/{trackId}") { backStackEntry ->
+                val trackId = backStackEntry.arguments?.getString("trackId")
+                TrackDetailsScreen(navController, trackId)
+            }
+        } }
+
+    @Composable
+    fun HomeScreen(navController: NavController) {
         var query by remember { mutableStateOf("") }
         val context = LocalContext.current
 
@@ -84,13 +107,14 @@ class MainActivity : ComponentActivity() {
         val apiInterface = retrofit.create(ApiInterface::class.java)
 
         Column(modifier = Modifier.padding(16.dp)) {
-            BasicTextField(
+            TextField(
                 value = query,
                 onValueChange = { query = it },
+                placeholder = { Text("Search for tracks") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 8.dp)
-                    .border(BorderStroke(1.dp, Color.Black)),
+                    .border(BorderStroke(1.dp, Color.Gray)),
                 keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(onSearch = {
                     if (query.isNotEmpty()) {
@@ -113,53 +137,52 @@ class MainActivity : ComponentActivity() {
                 Text("Search")
             }
             LazyColumn(modifier = Modifier.fillMaxSize()) {
-                items(albums) { album ->
-                    AlbumItemView(album, apiInterface)
-                }
                 items(tracks) { track ->
-                    TrackItem(track, apiInterface)
-                }
-                items(trackDetails) { trackDetail ->
-                    TrackDetailItem(trackDetail)
+                    TrackItem(track, apiInterface, navController)
                 }
             }
         }
     }
 
     @Composable
-    fun AlbumItemView(album: AlbumItem, apiInterface: ApiInterface) {
+    fun TrackItem(track: Data, apiInterface: ApiInterface, navController: NavController) {
         val scope = rememberCoroutineScope()
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(8.dp),
-            elevation = CardDefaults.cardElevation(4.dp)
+            elevation = CardDefaults.cardElevation(6.dp)
         ) {
             Row(
-                modifier = Modifier.padding(8.dp)
+                modifier = Modifier.padding(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Image(
                     painter = rememberAsyncImagePainter(
                         ImageRequest.Builder(LocalContext.current)
-                            .data(data = album.data.coverArt.sources.firstOrNull()?.url).apply {
-                                crossfade(true)
-                            }.build()
+                            .data(data = track.albumOfTrack.coverArt.sources.firstOrNull()?.url)
+                            .apply { crossfade(true) }
+                            .build()
                     ),
                     contentDescription = null,
                     modifier = Modifier
-                        .size(64.dp)
-                        .padding(end = 8.dp),
+                        .size(80.dp)
+                        .border(BorderStroke(2.dp, Color.Gray)),
                     contentScale = ContentScale.Crop
                 )
                 Column(
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text(text = album.data.name, fontSize = 18.sp)
-                    Text(text = album.data.artists.items.joinToString(", ") { it.profile.name }, fontSize = 14.sp)
+                    Text(text = track.name, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                    Text(text = track.artists.items.joinToString(", ") { it.profile.name }, fontSize = 16.sp, color = Color.Gray)
+                    Text(text = "ID: ${track.id}", fontSize = 14.sp, color = Color.Gray)
                 }
                 Button(onClick = {
                     scope.launch {
-                        getTrackDetails(apiInterface, album.data.uri) // Optionally handle album details
+                        getTrackDetails(apiInterface, track.id) { trackDetail ->
+                            trackDetails = trackDetail
+                            navController.navigate("trackDetails/${track.id}")
+                        }
                     }
                 }) {
                     Text("Details")
@@ -169,98 +192,76 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun TrackItem(track: DataXX, apiInterface: ApiInterface) {
-        val scope = rememberCoroutineScope()
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            elevation = CardDefaults.cardElevation(4.dp)
-        ) {
-            Row(
-                modifier = Modifier.padding(8.dp)
-            ) {
-                Image(
-                    painter = rememberAsyncImagePainter(
-                        ImageRequest.Builder(LocalContext.current)
-                            .data(data = track.albumOfTracks.coverArt.sources.firstOrNull()?.url).apply {
-                                crossfade(true)
-                            }.build()
-                    ),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(64.dp)
-                        .padding(end = 8.dp),
-                    contentScale = ContentScale.Crop
-                )
-                Column(
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(text = track.name, fontSize = 18.sp)
-                    Text(text = track.artists.items.joinToString(", ") { it.profile.name }, fontSize = 14.sp)
-                }
-                Button(onClick = {
-                    scope.launch {
-                        getTrackDetails(apiInterface, track.id) // Use track.id from DataXX
-                    }
-                }) {
-                    Text("Details")
-                }
-            }
-        }
-    }
-
-    @Composable
-    fun TrackDetailItem(track: Track) {
+    fun TrackDetailsScreen(navController: NavController, trackId: String?) {
+        val trackDetail = trackDetails
         LocalContext.current
+        rememberCoroutineScope()
 
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            elevation = CardDefaults.cardElevation(4.dp)
-        ) {
-            Row(
-                modifier = Modifier.padding(8.dp)
-            ) {
-                Image(
-                    painter = rememberAsyncImagePainter(
-                        ImageRequest.Builder(LocalContext.current)
-                            .data(data = track.album.images.firstOrNull()?.url).apply {
-                                crossfade(true)
-                            }.build()
-                    ),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(64.dp)
-                        .padding(end = 8.dp),
-                    contentScale = ContentScale.Crop
-                )
-                Column(
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(text = track.name, fontSize = 18.sp)
-                    Text(text = track.artists.joinToString(", ") { it.name }, fontSize = 14.sp)
-                    Text(text = "Album: ${track.album.name}", fontSize = 14.sp)
-                    Text(text = "ID: ${track.id}", fontSize = 14.sp) // Display track ID
-                }
-                Button(onClick = {
-                    playPreview(track.preview_url)
-                }) {
-                    Text("Play Preview")
+        LaunchedEffect(trackId) {
+            trackId?.let { id ->
+                val retrofit = Retrofit.Builder()
+                    .baseUrl("https://spotify23.p.rapidapi.com/")
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build()
+                val apiInterface = retrofit.create(ApiInterface::class.java)
+
+                getTrackDetails(apiInterface, id) { track ->
+                    trackDetails = track
                 }
             }
         }
-    }
 
-    private fun fetchInitialTracks() {
-        val retrofit = Retrofit.Builder()
-            .baseUrl("https://spotify23.p.rapidapi.com/")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-        val apiInterface = retrofit.create(ApiInterface::class.java)
+        trackDetail?.let { track ->
+            Column(modifier = Modifier.padding(16.dp)) {
+                Image(
+                    painter = rememberAsyncImagePainter(
+                        ImageRequest.Builder(LocalContext.current)
+                            .data(data = track.album.images.firstOrNull()?.url)
+                            .apply { crossfade(true) }
+                            .build()
+                    ),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .padding(bottom = 16.dp),
+                    contentScale = ContentScale.Crop
+                )
+                Text(text = track.name, fontSize = 32.sp, fontWeight = FontWeight.Bold)
+                Text(text = track.artists.joinToString(", ") { it.name }, fontSize = 20.sp, color = Color.Gray)
+                Text(text = "Album: ${track.album.name}", fontSize = 20.sp, color = Color.Gray)
+                Text(text = "ID: ${track.id}", fontSize = 16.sp, color = Color.Gray)
 
-        searchTracks(apiInterface, "q") // Replace "q" with a default search term if needed
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    IconButton(onClick = {
+                        if (isPlaying) {
+                            exoPlayer?.pause()
+                            isPlaying = false
+                        } else {
+                            playPreview(track.preview_url)
+                            isPlaying = true
+                        }
+                    }) {
+                        Icon(
+                            painter = painterResource(id = if (isPlaying) R.drawable.pause else R.drawable.play_arrow),
+                            contentDescription = if (isPlaying) "Pause" else "Play",
+                            modifier = Modifier.size(64.dp)
+                        )
+                    }
+                    IconButton(onClick = {
+                        navController.popBackStack()
+                    }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            modifier = Modifier.size(64.dp)
+                        )
+                    }
+                }
+            }
+        }
     }
 
     private fun searchTracks(apiInterface: ApiInterface, query: String) {
@@ -269,14 +270,7 @@ class MainActivity : ComponentActivity() {
         call.enqueue(object : Callback<TracksResponse> {
             override fun onResponse(call: Call<TracksResponse>, response: Response<TracksResponse>) {
                 if (response.isSuccessful) {
-                    val albumsList = response.body()?.albums?.items
-                    val tracksList = response.body()?.songs?.items?.map { it.songdata }
-                    if (albumsList != null) {
-                        albums.clear()
-                        albums.addAll(albumsList)
-                    } else {
-                        Toast.makeText(this@MainActivity, "No album results found", Toast.LENGTH_SHORT).show()
-                    }
+                    val tracksList = response.body()?.tracks?.items?.map { it.data }
                     if (tracksList != null) {
                         tracks.clear()
                         tracks.addAll(tracksList)
@@ -289,12 +283,12 @@ class MainActivity : ComponentActivity() {
             }
 
             override fun onFailure(call: Call<TracksResponse>, t: Throwable) {
-                Toast.makeText(this@MainActivity, "Failed to fetch data", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@MainActivity, "Failed to fetch data: ${t.message}", Toast.LENGTH_SHORT).show()
             }
         })
     }
 
-    private fun getTrackDetails(apiInterface: ApiInterface, trackId: String) {
+    private fun getTrackDetails(apiInterface: ApiInterface, trackId: String, onSuccess: (Track) -> Unit) {
         val call = apiInterface.getTracks(trackId)
 
         call.enqueue(object : Callback<TrackDetailsResponse> {
@@ -302,14 +296,7 @@ class MainActivity : ComponentActivity() {
                 if (response.isSuccessful) {
                     val trackDetailsList = response.body()?.tracks
                     if (!trackDetailsList.isNullOrEmpty()) {
-                        // Validate the track name with the response
-                        val receivedTrack = trackDetailsList.first()
-                        if (tracks.any { it.id == trackId && it.name == receivedTrack.name }) {
-                            trackDetails.clear()
-                            trackDetails.addAll(trackDetailsList)
-                        } else {
-                            Toast.makeText(this@MainActivity, "Track ID does not match the track name", Toast.LENGTH_SHORT).show()
-                        }
+                        onSuccess(trackDetailsList.first())
                     } else {
                         Toast.makeText(this@MainActivity, "No details found", Toast.LENGTH_SHORT).show()
                     }
@@ -319,7 +306,7 @@ class MainActivity : ComponentActivity() {
             }
 
             override fun onFailure(call: Call<TrackDetailsResponse>, t: Throwable) {
-                Toast.makeText(this@MainActivity, "Failed to fetch data", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@MainActivity, "Failed to fetch data: ${t.message}", Toast.LENGTH_SHORT).show()
             }
         })
     }

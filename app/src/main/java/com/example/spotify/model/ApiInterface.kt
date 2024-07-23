@@ -8,7 +8,7 @@ import retrofit2.http.Query
 
 interface ApiInterface {
     @Headers(
-        "x-rapidapi-key:410665d3a7mshe50edbda597d4b9p18e119jsn03f20295d999",
+        "x-rapidapi-key:6abaafc88dmsh81cb72f07b2443ap1be866jsnbdf3ed7d9ced",
         "x-rapidapi-host:spotify23.p.rapidapi.com"
     )
     @GET("search")
@@ -20,7 +20,7 @@ interface ApiInterface {
     ): Call<TracksResponse>
 
     @Headers(
-        "x-rapidapi-key:410665d3a7mshe50edbda597d4b9p18e119jsn03f20295d999",
+        "x-rapidapi-key:6abaafc88dmsh81cb72f07b2443ap1be866jsnbdf3ed7d9ced",
         "x-rapidapi-host:spotify23.p.rapidapi.com"
     )
     @GET("tracks")
