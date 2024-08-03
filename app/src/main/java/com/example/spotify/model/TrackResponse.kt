@@ -4,14 +4,17 @@ data class TracksResponse(
     val query: String,
     val tracks: Tracks
 )
+
 data class Tracks(
     val items: List<Item>,
     val totalCount: Int
 )
+
 data class Item(
-    val `data`: Data
+    val data: Track
 )
-data class Data(
+
+data class Track(
     val albumOfTrack: AlbumOfTrack,
     val artists: Artists,
     val contentRating: ContentRating,
@@ -21,6 +24,7 @@ data class Data(
     val playability: Playability,
     val uri: String
 )
+
 data class AlbumOfTrack(
     val coverArt: CoverArt,
     val id: String,
@@ -28,33 +32,42 @@ data class AlbumOfTrack(
     val sharingInfo: SharingInfo,
     val uri: String
 )
+
 data class Artists(
-    val items: List<ItemX>
+    val items: List<Artist>
 )
+
 data class ContentRating(
     val label: String
 )
+
 data class Duration(
     val totalMilliseconds: Int
 )
+
 data class Playability(
     val playable: Boolean
 )
+
 data class SharingInfo(
     val shareUrl: String
 )
+
 data class CoverArt(
     val sources: List<Source>
 )
+
 data class Source(
     val height: Int,
     val url: String,
     val width: Int
 )
-data class ItemX(
+
+data class Artist(
     val profile: Profile,
     val uri: String
 )
+
 data class Profile(
     val name: String
 )

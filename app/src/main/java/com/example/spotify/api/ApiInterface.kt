@@ -1,6 +1,7 @@
-package com.example.spotify.model
+package com.example.spotify.api
 
-
+import com.example.spotify.model.TrackDetailsResponse
+import com.example.spotify.model.TracksResponse
 import retrofit2.Call
 import retrofit2.http.GET
 import retrofit2.http.Headers

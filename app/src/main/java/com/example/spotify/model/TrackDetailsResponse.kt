@@ -1,44 +1,44 @@
 package com.example.spotify.model
 
 data class TrackDetailsResponse(
-    val tracks: List<Track>
+    val tracks: List<TrackDetails>
 )
 
-data class Track(
+data class TrackDetails(
     val album: Album,
     val artists: List<ArtistX>,
-    val disc_number: Int,
-    val duration_ms: Int,
+    val discNumber: Int,
+    val durationMs: Int,
     val explicit: Boolean,
-    val external_ids: ExternalIds,
-    val external_urls: ExternalUrlsXXX,
+    val externalIds: ExternalIds,
+    val externalUrls: ExternalUrlsXXX,
     val id: String,
-    val is_local: Boolean,
-    val is_playable: Boolean,
+    val isLocal: Boolean,
+    val isPlayable: Boolean,
     val name: String,
     val popularity: Int,
-    val preview_url: String,
-    val track_number: Int,
+    val previewUrl: String,
+    val trackNumber: Int,
     val type: String,
     val uri: String
 )
 
 data class Album(
-    val album_type: String,
+    val albumType: String,
     val artists: List<ArtistX>,
-    val external_urls: ExternalUrlsXXX,
+    val externalUrls: ExternalUrlsXXX,
     val id: String,
     val images: List<Image>,
     val name: String,
-    val release_date: String,
-    val release_date_precision: String,
-    val total_tracks: Int,
+    val releaseDate: String,
+    val releaseDatePrecision: String,
+    val totalTracks: Int,
     val type: String,
     val uri: String
 )
 
 data class ArtistX(
-    val external_urls: ExternalUrlsXXX,
+    val externalUrls: ExternalUrlsXXX,
     val id: String,
     val name: String,
     val type: String,
